@@ -1,0 +1,188 @@
+services:
+
+  # ----------------- ORDER SERVICE  -----------------
+  orderservice:
+    container_name: orderservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: orderservice
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
+      - ORDER_SERVICE_LISTEN_ADDR=${ORDER_SERVICE_LISTEN_ADDR}
+      - ORDER_SERVICE_GROUP=${ORDER_SERVICE_GROUP}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+  # ----------------- PAYMENT SERVICE  -----------------
+  paymentservice:
+    container_name: paymentservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: paymentservice
+    ports:
+      - "8081:8081"
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
+      - PAYMENT_SERVICE_LISTEN_ADDR=${PAYMENT_SERVICE_LISTEN_ADDR}
+      - PAYMENT_SERVICE_GROUP=${PAYMENT_SERVICE_GROUP}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+    # ----------------- INVENTORY SERVICE  -----------------
+  inventoryservice:
+    container_name: inventoryservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: inventoryservice
+    ports:
+      - "8082:8082"
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
+      - INVENTORY_SERVICE_LISTEN_ADDR=${INVENTORY_SERVICE_LISTEN_ADDR}
+      - INVENTORY_SERVICE_GROUP=${INVENTORY_SERVICE_GROUP}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+    # ----------------- SHIPPING SERVICE  -----------------
+  shippingservice:
+    container_name: shippingservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: shippingservice
+    ports:
+      - "8083:8083"
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
+      - SHIPPING_SERVICE_LISTEN_ADDR=${SHIPPING_SERVICE_LISTEN_ADDR}
+      - SHIPPING_SERVICE_GROUP=${SHIPPING_SERVICE_GROUP}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+    # ----------------- NOTIFICATION SERVICE  -----------------
+  notificationservice:
+    container_name: notificationservice
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: notificationservice
+    ports:
+      - "8084:8084"
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
+      - NOTIFICATION_SERVICE_LISTEN_ADDR=${NOTIFICATION_SERVICE_LISTEN_ADDR}
+      - NOTIFICATION_SERVICE_GROUP=${NOTIFICATION_SERVICE_GROUP}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+  # ----------------- KAFKA  -----------------
+  kafka:
+    container_name: kafka
+    image: docker.io/bitnami/kafka:4.0
+    ports:
+      - "9092:9092"
+    # volumes:
+    #   - "kafka_data:/bitnami"
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      # Advertised Listeners (How clients connect)
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # Other
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CREATE_TOPICS=order-events:1:1
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 40s
+    depends_on:
+      redisdb:
+        condition: service_healthy
+  # ----------------- KAFKA UI  -----------------
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8085:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redisdb:
+        condition: service_healthy
+  # ----------------- Redis  -----------------
+  redisdb:
+    container_name: redis
+    restart: unless-stopped
+    image: redis:7
+    ports:
+      - 6379:6379
+    # volumes:
+    #   - redisdata:/data
+    networks:
+      - kafka-net
+    command: redis-server --save 60 1 --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+networks:
+  kafka-net:
+    driver: bridge
+  # volumes:
+  # kafka_data:
+  # redisdata:
