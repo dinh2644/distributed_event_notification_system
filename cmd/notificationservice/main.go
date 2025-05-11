@@ -20,11 +20,13 @@ import (
 )
 
 var (
-	LISTEN_ADDR       string
-	KAFKA_BROKERS     []string
-	KAFKA_TOPIC       string
-	kafkaProducer     *kafka.KafkaProducer
-	CONSUMER_GROUP_ID string
+	LISTEN_ADDR        string
+	KAFKA_BROKERS      []string
+	KAFKA_TOPIC        string
+	kafkaProducer      *kafka.KafkaProducer
+	CONSUMER_GROUP_ID  string
+	PERSONAL_GMAIL     string
+	GMAIL_APP_PASSWORD string
 )
 
 type ServiceEventHandler struct{}
@@ -35,6 +37,8 @@ func main() {
 	KAFKA_TOPIC = env.GetEnv("KAFKA_ORDERS_TOPIC", "order-events")
 	LISTEN_ADDR = env.GetEnv("NOTIFICATION_SERVICE_LISTEN_ADDR", ":8084")
 	CONSUMER_GROUP_ID = env.GetEnv("NOTIFICATION_SERVICE_GROUP", "notification-service-group")
+	PERSONAL_GMAIL = env.GetEnv("PERSONAL_GMAIL", "")
+	GMAIL_APP_PASSWORD = env.GetEnv("GMAIL_APP_PASSWORD", "")
 
 	// Init Producer
 	var err error
@@ -131,7 +135,7 @@ func handleShippingConfirmed(ev event.CloudEvent) {
 	message.SetBody("text/html", body)
 
 	// Set up the SMTP dialer
-	dialer := gomail.NewDialer("smtp.gmail.com", 587, "dinh2644.mail@gmail.com", "mtrn smhm xxoy jybn")
+	dialer := gomail.NewDialer("smtp.gmail.com", 587, PERSONAL_GMAIL, GMAIL_APP_PASSWORD)
 
 	// Send the email
 	if err := dialer.DialAndSend(message); err != nil {

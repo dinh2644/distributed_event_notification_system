@@ -9,12 +9,8 @@ services:
       target: orderservice
     ports:
       - "8080:8080"
-    environment:
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
-      - ORDER_SERVICE_LISTEN_ADDR=${ORDER_SERVICE_LISTEN_ADDR}
-      - ORDER_SERVICE_GROUP=${ORDER_SERVICE_GROUP}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - .env
     networks:
       - kafka-net
     depends_on:
@@ -31,12 +27,8 @@ services:
       target: paymentservice
     ports:
       - "8081:8081"
-    environment:
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
-      - PAYMENT_SERVICE_LISTEN_ADDR=${PAYMENT_SERVICE_LISTEN_ADDR}
-      - PAYMENT_SERVICE_GROUP=${PAYMENT_SERVICE_GROUP}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - .env
     networks:
       - kafka-net
     depends_on:
@@ -53,12 +45,8 @@ services:
       target: inventoryservice
     ports:
       - "8082:8082"
-    environment:
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
-      - INVENTORY_SERVICE_LISTEN_ADDR=${INVENTORY_SERVICE_LISTEN_ADDR}
-      - INVENTORY_SERVICE_GROUP=${INVENTORY_SERVICE_GROUP}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - .env
     networks:
       - kafka-net
     depends_on:
@@ -75,12 +63,8 @@ services:
       target: shippingservice
     ports:
       - "8083:8083"
-    environment:
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
-      - SHIPPING_SERVICE_LISTEN_ADDR=${SHIPPING_SERVICE_LISTEN_ADDR}
-      - SHIPPING_SERVICE_GROUP=${SHIPPING_SERVICE_GROUP}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - .env
     networks:
       - kafka-net
     depends_on:
@@ -97,12 +81,8 @@ services:
       target: notificationservice
     ports:
       - "8084:8084"
-    environment:
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
-      - KAFKA_ORDERS_TOPIC=${KAFKA_ORDERS_TOPIC}
-      - NOTIFICATION_SERVICE_LISTEN_ADDR=${NOTIFICATION_SERVICE_LISTEN_ADDR}
-      - NOTIFICATION_SERVICE_GROUP=${NOTIFICATION_SERVICE_GROUP}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - .env
     networks:
       - kafka-net
     depends_on:
